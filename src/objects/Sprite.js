@@ -7,36 +7,50 @@ THREE.Sprite = function ( material ) {
 
 	THREE.Object3D.call( this );
 
+	this.type = 'Sprite';
+
 	this.material = ( material !== undefined ) ? material : new THREE.SpriteMaterial();
 
-	this.rotation3d = this.rotation;
-	this.rotation = 0;
-
 };
 
-THREE.Sprite.prototype = Object.create( THREE.Object3D.prototype );
+THREE.Sprite.prototype = Object.assign( Object.create( THREE.Object3D.prototype ), {
 
-/*
- * Custom update matrix
- */
+	constructor: THREE.Sprite,
 
-THREE.Sprite.prototype.updateMatrix = function () {
+	raycast: ( function () {
 
-	this.rotation3d.set( 0, 0, this.rotation, this.rotation3d.order );
-	this.quaternion.setFromEuler( this.rotation3d );
-	this.matrix.compose( this.position, this.quaternion, this.scale );
+		var matrixPosition = new THREE.Vector3();
 
-	this.matrixWorldNeedsUpdate = true;
+		return function raycast( raycaster, intersects ) {
 
-};
+			matrixPosition.setFromMatrixPosition( this.matrixWorld );
 
-THREE.Sprite.prototype.clone = function ( object ) {
+			var distanceSq = raycaster.ray.distanceSqToPoint( matrixPosition );
+			var guessSizeSq = this.scale.x * this.scale.y / 4;
 
-	if ( object === undefined ) object = new THREE.Sprite( this.material );
+			if ( distanceSq > guessSizeSq ) {
 
-	THREE.Object3D.prototype.clone.call( this, object );
+				return;
 
-	return object;
+			}
 
-};
+			intersects.push( {
 
+				distance: Math.sqrt( distanceSq ),
+				point: this.position,
+				face: null,
+				object: this
+
+			} );
+
+		};
+
+	}() ),
+
+	clone: function () {
+
+		return new this.constructor( this.material ).copy( this );
+
+	}
+
+} );

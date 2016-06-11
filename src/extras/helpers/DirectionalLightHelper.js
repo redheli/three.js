@@ -1,6 +1,7 @@
 /**
  * @author alteredq / http://alteredqualia.com/
  * @author mrdoob / http://mrdoob.com/
+ * @author WestLangley / http://github.com/WestLangley
  */
 
 THREE.DirectionalLightHelper = function ( light, size ) {
@@ -10,49 +11,69 @@ THREE.DirectionalLightHelper = function ( light, size ) {
 	this.light = light;
 	this.light.updateMatrixWorld();
 
-	this.matrixWorld = light.matrixWorld;
+	this.matrix = light.matrixWorld;
 	this.matrixAutoUpdate = false;
 
-	var geometry = new THREE.PlaneGeometry( size, size );
-	var material = new THREE.MeshBasicMaterial( { wireframe: true, fog: false } );
-	material.color.copy( this.light.color ).multiplyScalar( this.light.intensity );
+	if ( size === undefined ) size = 1;
 
-	this.lightPlane = new THREE.Mesh( geometry, material );
-	this.add( this.lightPlane );
+	var geometry = new THREE.BufferGeometry();
+	geometry.addAttribute( 'position', new THREE.Float32Attribute( [
+		- size,   size, 0,
+		  size,   size, 0,
+		  size, - size, 0,
+		- size, - size, 0,
+		- size,   size, 0
+	], 3 ) );
 
-	geometry = new THREE.Geometry();
-	geometry.vertices.push( new THREE.Vector3() );
-	geometry.vertices.push( new THREE.Vector3() );
-	geometry.computeLineDistances();
+	var material = new THREE.LineBasicMaterial( { fog: false } );
 
-	material = new THREE.LineBasicMaterial( { fog: false } );
-	material.color.copy( this.light.color ).multiplyScalar( this.light.intensity );
+	this.add( new THREE.Line( geometry, material ) );
 
-	this.targetLine = new THREE.Line( geometry, material );
-	this.add( this.targetLine );
+	geometry = new THREE.BufferGeometry();
+	geometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0, 0, 0, 1 ], 3 ) );
+
+	this.add( new THREE.Line( geometry, material ));
 
 	this.update();
 
 };
 
 THREE.DirectionalLightHelper.prototype = Object.create( THREE.Object3D.prototype );
+THREE.DirectionalLightHelper.prototype.constructor = THREE.DirectionalLightHelper;
+
+THREE.DirectionalLightHelper.prototype.dispose = function () {
+
+	var lightPlane = this.children[ 0 ];
+	var targetLine = this.children[ 1 ];
+
+	lightPlane.geometry.dispose();
+	lightPlane.material.dispose();
+	targetLine.geometry.dispose();
+	targetLine.material.dispose();
+
+};
 
 THREE.DirectionalLightHelper.prototype.update = function () {
 
-	var vector = new THREE.Vector3();
+	var v1 = new THREE.Vector3();
+	var v2 = new THREE.Vector3();
+	var v3 = new THREE.Vector3();
 
 	return function () {
 
-		vector.getPositionFromMatrix( this.light.matrixWorld ).negate();
+		v1.setFromMatrixPosition( this.light.matrixWorld );
+		v2.setFromMatrixPosition( this.light.target.matrixWorld );
+		v3.subVectors( v2, v1 );
 
-		this.lightPlane.lookAt( vector );
-		this.lightPlane.material.color.copy( this.light.color ).multiplyScalar( this.light.intensity );
+		var lightPlane = this.children[ 0 ];
+		var targetLine = this.children[ 1 ];
 
-		this.targetLine.geometry.vertices[ 1 ].copy( vector );
-		this.targetLine.geometry.verticesNeedUpdate = true;
-		this.targetLine.material.color.copy( this.lightPlane.material.color );
+		lightPlane.lookAt( v3 );
+		lightPlane.material.color.copy( this.light.color ).multiplyScalar( this.light.intensity );
 
-	}
+		targetLine.lookAt( v3 );
+		targetLine.scale.z = v3.length();
+
+	};
 
 }();
-

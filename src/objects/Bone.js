@@ -1,57 +1,31 @@
 /**
  * @author mikael emtinger / http://gomo.se/
  * @author alteredq / http://alteredqualia.com/
+ * @author ikerr / http://verold.com
  */
 
-THREE.Bone = function( belongsToSkin ) {
+THREE.Bone = function ( skin ) {
 
 	THREE.Object3D.call( this );
 
-	this.skin = belongsToSkin;
-	this.skinMatrix = new THREE.Matrix4();
+	this.type = 'Bone';
+
+	this.skin = skin;
 
 };
 
-THREE.Bone.prototype = Object.create( THREE.Object3D.prototype );
+THREE.Bone.prototype = Object.assign( Object.create( THREE.Object3D.prototype ), {
 
-THREE.Bone.prototype.update = function ( parentSkinMatrix, forceUpdate ) {
+	constructor: THREE.Bone,
 
-	// update local
+	copy: function ( source ) {
 
-	if ( this.matrixAutoUpdate ) {
+		THREE.Object3D.prototype.copy.call( this, source );
 
-		forceUpdate |= this.updateMatrix();
+		this.skin = source.skin;
 
-	}
-
-	// update skin matrix
-
-	if ( forceUpdate || this.matrixWorldNeedsUpdate ) {
-
-		if( parentSkinMatrix ) {
-
-			this.skinMatrix.multiplyMatrices( parentSkinMatrix, this.matrix );
-
-		} else {
-
-			this.skinMatrix.copy( this.matrix );
-
-		}
-
-		this.matrixWorldNeedsUpdate = false;
-		forceUpdate = true;
+		return this;
 
 	}
 
-	// update children
-
-	var child, i, l = this.children.length;
-
-	for ( i = 0; i < l; i ++ ) {
-
-		this.children[ i ].update( this.skinMatrix, forceUpdate );
-
-	}
-
-};
-
+} );

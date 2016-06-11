@@ -11,17 +11,36 @@ THREE.SpotLightHelper = function ( light ) {
 	this.light = light;
 	this.light.updateMatrixWorld();
 
-	this.matrixWorld = light.matrixWorld;
+	this.matrix = light.matrixWorld;
 	this.matrixAutoUpdate = false;
 
-	var geometry = new THREE.CylinderGeometry( 0, 1, 1, 8, 1, true );
+	var geometry = new THREE.BufferGeometry();
 
-	geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, -0.5, 0 ) );
-	geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
+	var positions = [
+		0, 0, 0,   0,   0,   1,
+		0, 0, 0,   1,   0,   1,
+		0, 0, 0, - 1,   0,   1,
+		0, 0, 0,   0,   1,   1,
+		0, 0, 0,   0, - 1,   1
+	];
 
-	var material = new THREE.MeshBasicMaterial( { wireframe: true, fog: false } );
-	
-	this.cone = new THREE.Mesh( geometry, material );
+	for ( var i = 0, j = 1, l = 32; i < l; i ++, j ++ ) {
+
+		var p1 = ( i / l ) * Math.PI * 2;
+		var p2 = ( j / l ) * Math.PI * 2;
+
+		positions.push(
+			Math.cos( p1 ), Math.sin( p1 ), 1,
+			Math.cos( p2 ), Math.sin( p2 ), 1
+		);
+
+	}
+
+	geometry.addAttribute( 'position', new THREE.Float32Attribute( positions, 3 ) );
+
+	var material = new THREE.LineBasicMaterial( { fog: false } );
+
+	this.cone = new THREE.LineSegments( geometry, material );
 	this.add( this.cone );
 
 	this.update();
@@ -29,22 +48,34 @@ THREE.SpotLightHelper = function ( light ) {
 };
 
 THREE.SpotLightHelper.prototype = Object.create( THREE.Object3D.prototype );
+THREE.SpotLightHelper.prototype.constructor = THREE.SpotLightHelper;
+
+THREE.SpotLightHelper.prototype.dispose = function () {
+
+	this.cone.geometry.dispose();
+	this.cone.material.dispose();
+
+};
 
 THREE.SpotLightHelper.prototype.update = function () {
 
 	var vector = new THREE.Vector3();
+	var vector2 = new THREE.Vector3();
 
 	return function () {
 
-		var coneLength = this.light.distance ? this.light.distance : 10000;
+		var coneLength = this.light.distance ? this.light.distance : 1000;
 		var coneWidth = coneLength * Math.tan( this.light.angle );
 
 		this.cone.scale.set( coneWidth, coneWidth, coneLength );
 
-		this.cone.lookAt( vector.getPositionFromMatrix( this.light.matrixWorld ).negate() );
+		vector.setFromMatrixPosition( this.light.matrixWorld );
+		vector2.setFromMatrixPosition( this.light.target.matrixWorld );
+
+		this.cone.lookAt( vector2.sub( vector ) );
 
 		this.cone.material.color.copy( this.light.color ).multiplyScalar( this.light.intensity );
 
-	}
+	};
 
 }();
