@@ -44,6 +44,9 @@
 
 			var renderer, scene, controls, camera, stats;
 			var objects = [];
+			var line,vertex_number,positions;
+			var raycaster = new THREE.Raycaster();
+			var MAX_POINTS=103;
 
 
 			var WIDTH = window.innerWidth,
@@ -123,6 +126,9 @@
 				//
 
 				window.addEventListener( 'resize', onWindowResize, false );
+
+				// mouse event
+				document.addEventListener( 'mousedown', onMyMouseDown, false );
 
 			}
 
@@ -279,14 +285,99 @@
 				var material = new THREE.LineBasicMaterial({
 					color: 0x0000ff
 				});
-				var geometry = new THREE.Geometry();
-				geometry.vertices.push(new THREE.Vector3(-20, 0, 0));
-				geometry.vertices.push(new THREE.Vector3(0, 50, 0));
-				geometry.vertices.push(new THREE.Vector3(80, 0, 0));
+				var geometry = new THREE.BufferGeometry();
+				// attributes
+				positions = new Float32Array( 103 * 3 ); // 3 vertices per point
+				geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 
-				var line = new THREE.Line(geometry, material);
+				line = new THREE.Line(geometry, material);
+				line.geometry.dynamic = true;
+
+
+//				var positions = line.geometry.attributes.position.array;
+
+				var x = y = z = index = 0;
+
+				for ( var i = 0, l = MAX_POINTS; i < l; i ++ ) {
+
+					positions[ index ++ ] = x;
+					positions[ index ++ ] = y;
+					positions[ index ++ ] = z;
+
+/*
+					x += ( Math.random() - 0.5 ) * 30;
+					y += ( Math.random() - 0.5 ) * 30;
+					z += ( Math.random() - 0.5 ) * 30;
+*/
+
+				}
+				positions[0] = 10; positions[1]=20;
+				positions[3] = -20; positions[4]=30;
+				positions[6] = -30; positions[7]=50;
+				vertex_number = 3;
+
+				line.geometry.setDrawRange( 0, vertex_number );
+
+
+//				// fake points to take position
+//				for(var i=0;i<100;i++)
+//				{
+//					geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+//				}
+
+
+
+
+
 
 				scene.add(line);
+
+				line.material.linewidth = 15;
+
+			}
+
+			function onMyMouseDown( event ) {
+
+				event.preventDefault();
+
+				if ( event.button === THREE.MOUSE.LEFT ) {
+
+					console.log("onMyMouseDown left click");
+					var mouse = new THREE.Vector2();
+					mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+					mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+					raycaster.setFromCamera( mouse, camera );
+
+					var plane = new THREE.Plane(new THREE.Vector3(0,0,1));
+
+					var intersection = new THREE.Vector3();
+					if(raycaster.ray.intersectPlane( plane, intersection ))
+					{
+						console.log(intersection.x+' '+intersection.y+' '+intersection.z);
+						addPoint(intersection);
+					}
+					else{
+						console.log('no intersection');
+					}
+				}// end onMyMouseDown
+
+				function addPoint(myPoint) {
+					if(vertex_number>102) return;
+//					line.geometry.vertices.push(line.geometry.vertices.shift()); //shift the array
+//					var positions = line.geometry.attributes.position.array;
+					positions[vertex_number*3] = myPoint.x;
+					positions[vertex_number*3+1] = myPoint.y;
+
+//					positions[9] = myPoint.x;
+//					positions[10] = myPoint.y;
+
+					line.geometry.verticesNeedUpdate = true;
+					line.geometry.attributes.position.needsUpdate = true;
+					vertex_number ++;
+					line.geometry.setDrawRange( 0, vertex_number );
+					render();
+				}
 
 			}
 
