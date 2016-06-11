@@ -108,7 +108,7 @@
 				//controls.addEventListener( 'change', render ); // add this only if there is no animation loop (requestAnimationFrame)
 				controls.enableDamping = true;
 				controls.dampingFactor = 0.25;
-				controls.enableZoom = false;
+				controls.enableZoom = true;
 
 				var container = document.getElementById( 'container' );
 				container.appendChild( renderer.domElement );
@@ -255,6 +255,10 @@
 				var step = 1;
 
 				var gridHelper = new THREE.GridHelper( size, step );
+				gridHelper.position = new THREE.Vector3(0, 0, 0);
+				// http://danni-three.blogspot.sg/2013/09/threejs-helpers.html
+				// grid XY
+				gridHelper.rotation.x = Math.PI/2;
 				scene.add( gridHelper );
 
 				// axis
