@@ -29,7 +29,7 @@
 
 	<body>
 		<div id="info"><a href="http://threejs.org" target="_blank">three.js</a> - dashed lines example</div>
-		<div id="container"></div>
+		<div id="container" ></div>
 
 		<script src="../examples/js/Detector.js"></script>
 		<script src="../examples/js/libs/stats.min.js"></script>
@@ -37,8 +37,15 @@
 		<script src="../build/three.js"></script>
 		<script src="../examples/js/controls/OrbitControls.js"></script>
 
-
+		<script type='text/javascript' src='../examples/js/libs/dat.gui.min.js'></script>
 		<script>
+//			$(function() {
+//				$( "input[type=submit], a, button" )
+//						.button()
+//						.click(function( event ) {
+//							event.preventDefault();
+//						});
+//			});
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
@@ -46,8 +53,12 @@
 			var objects = [];
 			var group;
 			var line,vertex_number,positions,fishShape;
+			var DRAW_STATE_MACHINE={ IDLE:0, DRAWING:1 }
+			var draw_state=DRAW_STATE_MACHINE.IDLE;
 			var raycaster = new THREE.Raycaster();
 			var MAX_POINTS=103;
+
+			var gui,parameters,draw_polygon_item;
 
 
 			var WIDTH = window.innerWidth,
@@ -56,7 +67,7 @@
 			init();
 			createGrid();
 			animate();
-			drawPolygon();
+//			drawPolygon();
 
 			function init() {
 
@@ -134,7 +145,18 @@
 				window.addEventListener( 'resize', onWindowResize, false );
 
 				// mouse event
-				document.addEventListener( 'mousedown', onMyMouseDown, false );
+//				document.addEventListener( 'mousedown', onMyMouseDown, false );
+
+				//gui
+				gui = new dat.GUI({ width: 300 });
+				parameters = {
+					x:0,
+					draw_polygon: function() { drawPolygon(); }
+				};
+
+
+				gui.add( parameters, 'x' ).min(-200).max(200).step(1).listen();
+				draw_polygon_item = gui.add(parameters,'draw_polygon').name('Start Draw Polygon');
 
 			}
 
@@ -282,33 +304,44 @@
 
 
 			function drawPolygon() {
+				if(draw_state == DRAW_STATE_MACHINE.IDLE){
+					// start to draw
+					draw_state = DRAW_STATE_MACHINE.DRAWING;
+					draw_polygon_item.name('End Drawing Polygon');
+					// mouse event
+					document.addEventListener( 'mousedown', onMyMouseDown, false );
 
-//				group = new THREE.Group();
-////				group.position.y = 50;
-//				scene.add( group );
+					var x = y = 0;
 
-				// Fish
+					fishShape = new THREE.Shape();
 
-				var x = y = 0;
+//				fishShape.moveTo(x,y);
+//				fishShape.moveTo(10, 10);
+//				fishShape.moveTo(10,-10);
+//				fishShape.moveTo(-10,-10);
 
-				fishShape = new THREE.Shape();
+					// flat shape
 
-				fishShape.moveTo(x,y);
-				fishShape.moveTo(10, 10);
-				fishShape.moveTo(10,-10);
-				fishShape.moveTo(-10,-10);
+					var geometry = new THREE.ShapeGeometry( fishShape );
 
-				// flat shape
-
-				var geometry = new THREE.ShapeGeometry( fishShape );
-
-				var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x0000ff, transparent:true, opacity:0.5, side: THREE.DoubleSide } ) );
-				mesh.name = "my_mesh1";
-				mesh.position.set( 0, 0, 10 );
+					var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x0000ff, transparent:true, opacity:0.5, side: THREE.DoubleSide } ) );
+					mesh.name = "my_mesh1";
+					mesh.position.set( 0, 0, 10 );
 //				mesh.rotation.set( rx, ry, rz );
 //				mesh.scale.set( s, s, s );
 
-				scene.add(mesh);
+					scene.add(mesh);
+				}
+				else if(draw_state == DRAW_STATE_MACHINE.DRAWING)
+				{
+					// end the drawing
+					draw_state = DRAW_STATE_MACHINE.IDLE;
+					draw_polygon_item.name('Start Drawing Polygon');
+					// mouse event
+					document.removeEventListener( 'mousedown', onMyMouseDown, false );
+				}
+
+
 
 
 			}
