@@ -62,6 +62,7 @@
 			var polygon_objects=[];
 			var group;
 			var line,vertex_number,positions,fishShape;
+			var polygon_points=[];
 			var DRAW_STATE_MACHINE={ IDLE:0, DRAWING:1 };
 			var draw_state=DRAW_STATE_MACHINE.IDLE;
 			var current_mesh_name;
@@ -405,9 +406,15 @@ var my_intersection;
 				function addPoint(myPoint) {
 
 					var rm_mesh = scene.getObjectByName(current_mesh_name);
+					var index = polygon_objects.indexOf(rm_mesh);
+					if(index>-1)
+					{
+						polygon_objects.splice(index, 1);
+					}
 					scene.remove( rm_mesh );
 
 					fishShape.moveTo(myPoint.x,myPoint.y,myPoint.z);
+					polygon_points.push(myPoint);
 
 					// flat shape
 
