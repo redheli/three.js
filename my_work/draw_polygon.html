@@ -24,6 +24,12 @@
 				z-index:100;
 			}
 
+			#container {
+				background-color: #000;
+				width: 200px;
+				height: 200px;
+			}
+
 		</style>
 	</head>
 
@@ -60,9 +66,14 @@
 
 			var gui,parameters,draw_polygon_item;
 
+			var CONTAINER_WIDTH = 200;
+			var CONTAINER_HEIGHT = 200;
+
+//			var WIDTH = CONTAINER_WIDTH;//window.innerWidth,
+//				HEIGHT = CONTAINER_HEIGHT;//window.innerHeight;
 
 			var WIDTH = window.innerWidth,
-				HEIGHT = window.innerHeight;
+			HEIGHT = window.innerHeight;
 
 			init();
 			createGrid();
@@ -123,6 +134,7 @@
 				objects.push( object );
 				scene.add( object );
 
+				var container = document.getElementById( 'container' );
 				renderer = new THREE.WebGLRenderer( { clearColor: 0x111111, clearAlpha: 1, antialias: true } );
 				renderer.setSize( WIDTH, HEIGHT );
 
@@ -132,7 +144,7 @@
 				controls.dampingFactor = 0.25;
 				controls.enableZoom = true;
 
-				var container = document.getElementById( 'container' );
+
 				container.appendChild( renderer.domElement );
 
 				stats = new Stats();
@@ -309,7 +321,7 @@
 					draw_state = DRAW_STATE_MACHINE.DRAWING;
 					draw_polygon_item.name('End Drawing Polygon');
 					// mouse event
-					document.addEventListener( 'mousedown', onMyMouseDown, false );
+					document.getElementById("container").addEventListener( 'mousedown', onMyMouseDown, false );
 
 					var x = y = 0;
 
@@ -338,7 +350,7 @@
 					draw_state = DRAW_STATE_MACHINE.IDLE;
 					draw_polygon_item.name('Start Drawing Polygon');
 					// mouse event
-					document.removeEventListener( 'mousedown', onMyMouseDown, false );
+					document.getElementById("container").removeEventListener( 'mousedown', onMyMouseDown, false );
 				}
 
 
