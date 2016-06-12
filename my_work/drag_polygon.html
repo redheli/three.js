@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - dashed lines</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #ffffff;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				z-index:100;
+			}
+
+			#container {
+				background-color: #000;
+				width: 100%;
+				height: 100%;
+			}
+
+		</style>
+	</head>
+
+	<body>
+		<div id="info"><a href="http://threejs.org" target="_blank">three.js</a> - dashed lines example</div>
+		<div id="container" ></div>
+
+		<script src="../examples/js/Detector.js"></script>
+		<script src="../examples/js/libs/stats.min.js"></script>
+
+		<script src="../build/three.js"></script>
+		<script src="../examples/js/controls/OrbitControls.js"></script>
+
+		<script type='text/javascript' src='../examples/js/libs/dat.gui.min.js'></script>
+		<script>
+//			$(function() {
+//				$( "input[type=submit], a, button" )
+//						.button()
+//						.click(function( event ) {
+//							event.preventDefault();
+//						});
+//			});
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var renderer, scene, controls, camera, stats;
+			var container;
+			var plane = new THREE.Plane();
+			var objects = [];
+			var polygon_objects=[];
+			var group;
+			var line,vertex_number,positions,fishShape;
+			var DRAW_STATE_MACHINE={ IDLE:0, DRAWING:1 };
+			var draw_state=DRAW_STATE_MACHINE.IDLE;
+			var current_mesh_name;
+			var count=0;
+			var raycaster = new THREE.Raycaster();
+			var MAX_POINTS=103;
+var my_intersection;
+
+			var gui,parameters,draw_polygon_item;
+
+			var CONTAINER_WIDTH = 200;
+			var CONTAINER_HEIGHT = 200;
+
+			var mouse = new THREE.Vector2(),
+				offset = new THREE.Vector3(),
+				intersection = new THREE.Vector3(),
+				INTERSECTED, SELECTED;
+
+//			var WIDTH = CONTAINER_WIDTH;//window.innerWidth,
+//				HEIGHT = CONTAINER_HEIGHT;//window.innerHeight;
+
+			var WIDTH = window.innerWidth,
+			HEIGHT = window.innerHeight;
+
+			init();
+			createGrid();
+			animate();
+//			drawPolygon();
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 60, WIDTH / HEIGHT, 1, 2000 );
+				camera.up.set( 0, 0, 1 );
+				camera.position.z = 150;
+				camera.position.x = 20;
+				camera.position.y = -50;
+				camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+//				var light = new THREE.PointLight( 0xffffff, 0.8 );
+//				camera.add( light );
+
+				scene = new THREE.Scene();
+
+				var light = new THREE.DirectionalLight( 0xffffff );
+				light.position.set( 0, 1, 200 ).normalize();
+				scene.add(light);
+
+				//scene.fog = new THREE.Fog( 0x111111, 150, 200 );
+
+				root = new THREE.Object3D();
+
+				var subdivisions = 6;
+				var recursion = 1;
+
+				var points = hilbert3D( new THREE.Vector3( 0,0,0 ), 25.0, recursion, 0, 1, 2, 3, 4, 5, 6, 7 );
+
+				var spline = new THREE.Spline( points );
+				var geometrySpline = new THREE.Geometry();
+
+				for ( var i = 0; i < points.length * subdivisions; i ++ ) {
+
+					var index = i / ( points.length * subdivisions );
+					var position = spline.getPoint( index );
+
+					geometrySpline.vertices[ i ] = new THREE.Vector3( position.x, position.y, position.z );
+
+				}
+
+				var geometryCube = cube( 50 );
+
+				geometryCube.computeLineDistances();
+				geometrySpline.computeLineDistances();
+
+				var object = new THREE.Line( geometrySpline, new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1, gapSize: 0.5 } ), THREE.LineStrip );
+
+				objects.push( object );
+				scene.add( object );
+
+				var object = new THREE.Line( geometryCube, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 3, gapSize: 1, linewidth: 2 } ), THREE.LinePieces );
+
+				objects.push( object );
+				scene.add( object );
+
+				container = document.getElementById( 'container' );
+				renderer = new THREE.WebGLRenderer( { clearColor: 0x111111, clearAlpha: 1, antialias: true } );
+				renderer.setSize( WIDTH, HEIGHT );
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				//controls.addEventListener( 'change', render ); // add this only if there is no animation loop (requestAnimationFrame)
+				controls.enableDamping = true;
+				controls.dampingFactor = 0.25;
+				controls.enableZoom = true;
+
+
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// mouse event
+				plane = new THREE.Plane(new THREE.Vector3(0,0,1),0);
+//				document.addEventListener( 'mousedown', onMyMouseDown, false );
+				renderer.domElement.addEventListener( 'mousemove', onSelectionMouseMove, false );
+				renderer.domElement.addEventListener( 'mousedown', onSelectionMouseDown, false );
+				renderer.domElement.addEventListener( 'mouseup', onSelectionMouseUp, false );
+
+				//gui
+				gui = new dat.GUI({ width: 300 });
+				parameters = {
+					x:0,
+					draw_polygon: function() { drawPolygon(); }
+				};
+
+
+				gui.add( parameters, 'x' ).min(-200).max(200).step(1).listen();
+				draw_polygon_item = gui.add(parameters,'draw_polygon').name('Start Draw Polygon');
+
+			}
+
+			function cube( size ) {
+
+				var h = size * 0.5;
+
+				var geometry = new THREE.Geometry();
+
+				geometry.vertices.push( new THREE.Vector3( -h, -h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( -h, h, -h ) );
+
+				geometry.vertices.push( new THREE.Vector3( -h, h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( h, h, -h ) );
+
+				geometry.vertices.push( new THREE.Vector3( h, h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( h, -h, -h ) );
+
+				geometry.vertices.push( new THREE.Vector3( h, -h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( -h, -h, -h ) );
+
+
+				geometry.vertices.push( new THREE.Vector3( -h, -h, h ) );
+				geometry.vertices.push( new THREE.Vector3( -h, h, h ) );
+
+				geometry.vertices.push( new THREE.Vector3( -h, h, h ) );
+				geometry.vertices.push( new THREE.Vector3( h, h, h ) );
+
+				geometry.vertices.push( new THREE.Vector3( h, h, h ) );
+				geometry.vertices.push( new THREE.Vector3( h, -h, h ) );
+
+				geometry.vertices.push( new THREE.Vector3( h, -h, h ) );
+				geometry.vertices.push( new THREE.Vector3( -h, -h, h ) );
+
+				geometry.vertices.push( new THREE.Vector3( -h, -h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( -h, -h, h ) );
+
+				geometry.vertices.push( new THREE.Vector3( -h, h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( -h, h, h ) );
+
+				geometry.vertices.push( new THREE.Vector3( h, h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( h, h, h ) );
+
+				geometry.vertices.push( new THREE.Vector3( h, -h, -h ) );
+				geometry.vertices.push( new THREE.Vector3( h, -h, h ) );
+
+				return geometry;
+
+			}
+
+			// port of Processing Java code by Thomas Diewald
+			// http://www.openprocessing.org/visuals/?visualID=15599
+
+			function hilbert3D( center, side, iterations, v0, v1, v2, v3, v4, v5, v6, v7 ) {
+
+				var half = side/2,
+
+					vec_s = [
+
+					new THREE.Vector3( center.x - half, center.y + half, center.z - half ),
+					new THREE.Vector3( center.x - half, center.y + half, center.z + half ),
+					new THREE.Vector3( center.x - half, center.y - half, center.z + half ),
+					new THREE.Vector3( center.x - half, center.y - half, center.z - half ),
+					new THREE.Vector3( center.x + half, center.y - half, center.z - half ),
+					new THREE.Vector3( center.x + half, center.y - half, center.z + half ),
+					new THREE.Vector3( center.x + half, center.y + half, center.z + half ),
+					new THREE.Vector3( center.x + half, center.y + half, center.z - half )
+
+					],
+
+					vec = [ vec_s[ v0 ], vec_s[ v1 ], vec_s[ v2 ], vec_s[ v3 ], vec_s[ v4 ], vec_s[ v5 ], vec_s[ v6 ], vec_s[ v7 ] ];
+
+				if ( --iterations >= 0 ) {
+
+					var tmp = [];
+
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 0 ], half, iterations, v0, v3, v4, v7, v6, v5, v2, v1 ) );
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 1 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ) );
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 2 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ) );
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 3 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ) );
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 4 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ) );
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 5 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ) );
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 6 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ) );
+					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 7 ], half, iterations, v6, v5, v2, v1, v0, v3, v4, v7 ) );
+
+					return tmp;
+
+				}
+
+				return vec;
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				stats.update();
+				controls.update();
+			}
+
+			function render() {
+
+				var time = Date.now() * 0.001;
+
+				for ( var i = 0; i < objects.length; i ++ ) {
+
+					var object = objects[ i ];
+
+					//object.rotation.x = 0.25 * time * ( i%2 == 1 ? 1 : -1);
+					object.rotation.x = 0.25 * time;
+					object.rotation.y = 0.25 * time;
+
+				}
+
+				renderer.render( scene, camera );
+
+			}
+
+			function createGrid() {
+				var size = 100;
+				var step = 1;
+
+				var gridHelper = new THREE.GridHelper( size, step );
+				gridHelper.position = new THREE.Vector3(0, 0, 0);
+				// http://danni-three.blogspot.sg/2013/09/threejs-helpers.html
+				// grid XY
+				gridHelper.rotation.x = Math.PI/2;
+				scene.add( gridHelper );
+
+				// axis
+				var axisHelper = new THREE.AxisHelper( 10 );
+				scene.add( axisHelper );
+			}
+
+
+			function drawPolygon() {
+				if(draw_state == DRAW_STATE_MACHINE.IDLE){
+					// start to draw
+					draw_state = DRAW_STATE_MACHINE.DRAWING;
+					draw_polygon_item.name('End Drawing Polygon');
+					// mouse event
+					document.getElementById("container").addEventListener( 'mousedown', onMyMouseDown, false );
+
+					var x = y = 0;
+
+					fishShape = new THREE.Shape();
+
+//				fishShape.moveTo(x,y);
+//				fishShape.moveTo(10, 10);
+//				fishShape.moveTo(10,-10);
+//				fishShape.moveTo(-10,-10);
+//					fishShape.moveTo(-10,20);
+
+					// flat shape
+
+//					var geometry = new THREE.ShapeGeometry( fishShape );
+//
+//					var mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { color: 0x0000ff, transparent:true, opacity:0.5 } ) );
+					current_mesh_name = "my_mesh"+count; count++;
+//					mesh.name = current_mesh_name;
+//					mesh.position.set( 0, 0, 10 );
+
+//				mesh.rotation.set( rx, ry, rz );
+//				mesh.scale.set( s, s, s );
+
+//					scene.add(mesh);
+				}
+				else if(draw_state == DRAW_STATE_MACHINE.DRAWING)
+				{
+					// end the drawing
+					draw_state = DRAW_STATE_MACHINE.IDLE;
+					draw_polygon_item.name('Start Drawing Polygon');
+					// mouse event
+					document.getElementById("container").removeEventListener( 'mousedown', onMyMouseDown, false );
+				}
+
+
+
+
+			}
+
+			function onMyMouseDown( event ) {
+
+				event.preventDefault();
+
+				if ( event.button === THREE.MOUSE.LEFT ) {
+
+					console.log("onMyMouseDown left click");
+					var mouse = new THREE.Vector2();
+					mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+					mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+					raycaster.setFromCamera( mouse, camera );
+
+//					plane = new THREE.Plane(new THREE.Vector3(0,0,1),0);
+
+					my_intersection = new THREE.Vector3();
+					if(raycaster.ray.intersectPlane( plane, my_intersection ))
+					{
+						console.log(my_intersection.x+' '+my_intersection.y+' '+my_intersection.z);
+						addPoint(my_intersection);
+					}
+					else{
+						console.log('no intersection');
+					}
+				}// end onMyMouseDown
+
+				function addPoint(myPoint) {
+
+					var rm_mesh = scene.getObjectByName(current_mesh_name);
+					scene.remove( rm_mesh );
+
+					fishShape.moveTo(myPoint.x,myPoint.y,myPoint.z);
+
+					// flat shape
+
+					var geometry = new THREE.ShapeGeometry( fishShape );
+
+					var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x00ff00, transparent:true, opacity: 0.8, side: THREE.DoubleSide } ) );
+					mesh.name = current_mesh_name;
+				mesh.position = new THREE.Vector3(0, 0, 0.1);
+					mesh.position.setZ(0.1);
+//				mesh.rotation.set( rx, ry, rz );
+//					mesh.scale.set( s, s, s );
+
+					scene.add(mesh);
+					polygon_objects.push(mesh);
+
+					render();
+				}
+
+			}// end onMyMouseDown
+
+			// selection
+			function onSelectionMouseMove( event ) {
+
+				event.preventDefault();
+
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+				raycaster.setFromCamera( mouse, camera );
+
+				if ( SELECTED ) {
+
+					if ( raycaster.ray.intersectPlane( plane, intersection ) ) {
+
+//						SELECTED.position.copy( intersection.sub( offset ) );
+						console.log(' ');
+						console.log('selected object before pos '+SELECTED.position.x+' '+SELECTED.position.y+' '+SELECTED.position.z);
+						console.log('intersection pos '+intersection.x+' '+intersection.y+' '+intersection.z);
+						console.log('offset '+offset.x+' '+offset.y+' '+offset.z);
+						SELECTED.position.copy( intersection.sub( offset ) );
+						console.log('selected object after pos '+SELECTED.position.x+' '+SELECTED.position.y+' '+SELECTED.position.z);
+
+					}
+
+					return;
+
+				}
+
+				var intersects = raycaster.intersectObjects( polygon_objects );
+
+				if ( intersects.length > 0 ) {
+
+					if ( INTERSECTED != intersects[ 0 ].object ) {
+
+						if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+
+						INTERSECTED = intersects[ 0 ].object;
+						INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+
+//						plane.setFromNormalAndCoplanarPoint(
+//								camera.getWorldDirection( plane.normal ),
+//								INTERSECTED.position );
+
+					}
+
+					container.style.cursor = 'pointer';
+
+				} else {
+
+					if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+
+					INTERSECTED = null;
+
+					container.style.cursor = 'auto';
+
+				}
+
+			}// end onSelectionMouseMove
+
+			function onSelectionMouseDown( event ) {
+
+				event.preventDefault();
+
+				raycaster.setFromCamera( mouse, camera );
+
+				var intersects = raycaster.intersectObjects( polygon_objects );
+
+				if ( intersects.length > 0 ) {
+
+
+
+					controls.enabled = false;
+
+					SELECTED = intersects[ 0 ].object;
+
+					console.log('selected object'+SELECTED.name);
+
+					if ( raycaster.ray.intersectPlane( plane, intersection ) ) {
+
+						offset.copy( intersection ).sub( SELECTED.position );
+
+					}
+
+					container.style.cursor = 'move';
+
+				}
+
+			}// onSelctionMouseDown
+
+			function onSelectionMouseUp( event ) {
+
+				event.preventDefault();
+
+				controls.enabled = true;
+
+				if ( INTERSECTED ) {
+
+					SELECTED = null;
+
+				}
+
+				container.style.cursor = 'auto';
+
+			}// onSelectionMouseUp
+
+
+
+		</script>
+
+</body>
+
+</html>
