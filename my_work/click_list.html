@@ -154,7 +154,19 @@ var my_intersection;
 				gui.add( parameters, 'x' ).min(-200).max(200).step(1).listen();
 				draw_polygon_item = gui.add(parameters,'draw_polygon').name('Start Draw Polygon');
 
-				// create two polygon first
+				// create two polygon and one line first
+				// line
+				var line_material = new THREE.LineBasicMaterial({
+					color: 0x0000ff
+				});
+				var line_geometry = new THREE.Geometry();
+				line_geometry.vertices.push(new THREE.Vector3(60, 30, 0));
+				line_geometry.vertices.push(new THREE.Vector3(30, 60, 0));
+				line_geometry.vertices.push(new THREE.Vector3(-30, 0, 0));
+				var line = new THREE.Line(line_geometry, line_material);
+				line.name = "I am line...";
+				scene.add(line);
+				polygon_objects.push(line);
 				// 1
 				fishShape = new THREE.Shape();
 				fishShape.moveTo(10,10,0);
@@ -165,7 +177,7 @@ var my_intersection;
 
 				// polygon is just mesh
 				var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x00ff00, transparent:true, opacity: 0.8, side: THREE.DoubleSide } ) );
-				mesh.name = current_mesh_name;
+				mesh.name = "polygon_1";
 				mesh.position = new THREE.Vector3(0, 0, 0.1);
 				mesh.position.setZ(0.1);
 
@@ -182,7 +194,7 @@ var my_intersection;
 
 				// polygon is just mesh
 				var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x00ff00, transparent:true, opacity: 0.8, side: THREE.DoubleSide } ) );
-				mesh.name = current_mesh_name;
+				mesh.name = "polygon_2";
 				mesh.position = new THREE.Vector3(0, 0, 0.1);
 				mesh.position.setZ(0.1);
 
@@ -230,7 +242,7 @@ var my_intersection;
 
 			function createGrid() {
 				var size = 150;
-				var step = 1;
+				var step = 10;
 
 				var gridHelper = new THREE.GridHelper( size, step );
 				gridHelper.position = new THREE.Vector3(0, 0, 0);
@@ -398,7 +410,7 @@ var my_intersection;
 					container.style.cursor = 'pointer';
 
 					// update parent doc
-					$("#my_label", parent.document.body).text("object is good");
+					$("#my_label", parent.document.body).text("object is good: "+INTERSECTED.name);
 
 				} else {
 
