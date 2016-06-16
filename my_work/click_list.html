@@ -114,38 +114,6 @@ var my_intersection;
 
 				root = new THREE.Object3D();
 
-				var subdivisions = 6;
-				var recursion = 1;
-
-				var points = hilbert3D( new THREE.Vector3( 0,0,0 ), 25.0, recursion, 0, 1, 2, 3, 4, 5, 6, 7 );
-
-				var spline = new THREE.Spline( points );
-				var geometrySpline = new THREE.Geometry();
-
-				for ( var i = 0; i < points.length * subdivisions; i ++ ) {
-
-					var index = i / ( points.length * subdivisions );
-					var position = spline.getPoint( index );
-
-					geometrySpline.vertices[ i ] = new THREE.Vector3( position.x, position.y, position.z );
-
-				}
-
-				var geometryCube = cube( 50 );
-
-				geometryCube.computeLineDistances();
-				geometrySpline.computeLineDistances();
-
-				var object = new THREE.Line( geometrySpline, new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1, gapSize: 0.5 } ), THREE.LineStrip );
-
-				objects.push( object );
-				scene.add( object );
-
-				var object = new THREE.Line( geometryCube, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 3, gapSize: 1, linewidth: 2 } ), THREE.LinePieces );
-
-				objects.push( object );
-				scene.add( object );
-
 				container = document.getElementById( 'container' );
 				renderer = new THREE.WebGLRenderer( { clearColor: 0x111111, clearAlpha: 1, antialias: true } );
 				renderer.setSize( WIDTH, HEIGHT );
@@ -186,97 +154,43 @@ var my_intersection;
 				gui.add( parameters, 'x' ).min(-200).max(200).step(1).listen();
 				draw_polygon_item = gui.add(parameters,'draw_polygon').name('Start Draw Polygon');
 
+				// create two polygon first
+				// 1
+				fishShape = new THREE.Shape();
+				fishShape.moveTo(10,10,0);
+				fishShape.moveTo(10,25,0);
+				fishShape.moveTo(30,30,0);
+				fishShape.moveTo(50,20,0);
+				var geometry = new THREE.ShapeGeometry( fishShape );
+
+				// polygon is just mesh
+				var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x00ff00, transparent:true, opacity: 0.8, side: THREE.DoubleSide } ) );
+				mesh.name = current_mesh_name;
+				mesh.position = new THREE.Vector3(0, 0, 0.1);
+				mesh.position.setZ(0.1);
+
+				scene.add(mesh);
+				polygon_objects.push(mesh);
+
+				// 2
+				fishShape = new THREE.Shape();
+				fishShape.moveTo(-10,-10,0);
+				fishShape.moveTo(-10,-25,0);
+				fishShape.moveTo(-50,-60,0);
+				fishShape.moveTo(-50,-20,0);
+				var geometry = new THREE.ShapeGeometry( fishShape );
+
+				// polygon is just mesh
+				var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x00ff00, transparent:true, opacity: 0.8, side: THREE.DoubleSide } ) );
+				mesh.name = current_mesh_name;
+				mesh.position = new THREE.Vector3(0, 0, 0.1);
+				mesh.position.setZ(0.1);
+
+				scene.add(mesh);
+				polygon_objects.push(mesh);
 			}
 
-			function cube( size ) {
 
-				var h = size * 0.5;
-
-				var geometry = new THREE.Geometry();
-
-				geometry.vertices.push( new THREE.Vector3( -h, -h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( -h, h, -h ) );
-
-				geometry.vertices.push( new THREE.Vector3( -h, h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( h, h, -h ) );
-
-				geometry.vertices.push( new THREE.Vector3( h, h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( h, -h, -h ) );
-
-				geometry.vertices.push( new THREE.Vector3( h, -h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( -h, -h, -h ) );
-
-
-				geometry.vertices.push( new THREE.Vector3( -h, -h, h ) );
-				geometry.vertices.push( new THREE.Vector3( -h, h, h ) );
-
-				geometry.vertices.push( new THREE.Vector3( -h, h, h ) );
-				geometry.vertices.push( new THREE.Vector3( h, h, h ) );
-
-				geometry.vertices.push( new THREE.Vector3( h, h, h ) );
-				geometry.vertices.push( new THREE.Vector3( h, -h, h ) );
-
-				geometry.vertices.push( new THREE.Vector3( h, -h, h ) );
-				geometry.vertices.push( new THREE.Vector3( -h, -h, h ) );
-
-				geometry.vertices.push( new THREE.Vector3( -h, -h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( -h, -h, h ) );
-
-				geometry.vertices.push( new THREE.Vector3( -h, h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( -h, h, h ) );
-
-				geometry.vertices.push( new THREE.Vector3( h, h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( h, h, h ) );
-
-				geometry.vertices.push( new THREE.Vector3( h, -h, -h ) );
-				geometry.vertices.push( new THREE.Vector3( h, -h, h ) );
-
-				return geometry;
-
-			}
-
-			// port of Processing Java code by Thomas Diewald
-			// http://www.openprocessing.org/visuals/?visualID=15599
-
-			function hilbert3D( center, side, iterations, v0, v1, v2, v3, v4, v5, v6, v7 ) {
-
-				var half = side/2,
-
-					vec_s = [
-
-					new THREE.Vector3( center.x - half, center.y + half, center.z - half ),
-					new THREE.Vector3( center.x - half, center.y + half, center.z + half ),
-					new THREE.Vector3( center.x - half, center.y - half, center.z + half ),
-					new THREE.Vector3( center.x - half, center.y - half, center.z - half ),
-					new THREE.Vector3( center.x + half, center.y - half, center.z - half ),
-					new THREE.Vector3( center.x + half, center.y - half, center.z + half ),
-					new THREE.Vector3( center.x + half, center.y + half, center.z + half ),
-					new THREE.Vector3( center.x + half, center.y + half, center.z - half )
-
-					],
-
-					vec = [ vec_s[ v0 ], vec_s[ v1 ], vec_s[ v2 ], vec_s[ v3 ], vec_s[ v4 ], vec_s[ v5 ], vec_s[ v6 ], vec_s[ v7 ] ];
-
-				if ( --iterations >= 0 ) {
-
-					var tmp = [];
-
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 0 ], half, iterations, v0, v3, v4, v7, v6, v5, v2, v1 ) );
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 1 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ) );
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 2 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ) );
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 3 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ) );
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 4 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ) );
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 5 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ) );
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 6 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ) );
-					Array.prototype.push.apply( tmp, hilbert3D ( vec[ 7 ], half, iterations, v6, v5, v2, v1, v0, v3, v4, v7 ) );
-
-					return tmp;
-
-				}
-
-				return vec;
-
-			}
 
 			function onWindowResize() {
 
@@ -420,6 +334,7 @@ var my_intersection;
 
 					var geometry = new THREE.ShapeGeometry( fishShape );
 
+					// polygon is just mesh
 					var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x00ff00, transparent:true, opacity: 0.8, side: THREE.DoubleSide } ) );
 					mesh.name = current_mesh_name;
 				mesh.position = new THREE.Vector3(0, 0, 0.1);
