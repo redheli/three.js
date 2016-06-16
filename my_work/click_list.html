@@ -34,8 +34,29 @@
 	</head>
 
 	<body>
+		<div id="dialog" title="j3qUE cookbook overview" >
+			<h3>Overview</h3>
+			<div>
+				<p>Can <a href="http://jquery.com" target="_blank">jQuery</a> and <a href="http://threejs.org" target="_blank">Three.js</a> play nice together?</p>
+
+				<p>This Jaanga cookbook section contains sample examples for building code based on using jQuery and Three.js.</p>
+
+				<p>The source code for the examples is available at: <a href='https://github.com/jaanga/cookbook/tree/gh-pages/j3qUE/r1/' target='_blank'>github.com/jaanga/cookbook/j3qUE/r1/</a></p>
+
+				<p>Derivation of the name: j3qUE = jQuery + Three.js + User Experience</p>
+
+				<p>See also the related post on <a href="http://www.jaanga.com/2013/05/threejs-and-jquery-never-twain-need-meet.html" target="_blank">jaanga.com</a></p>
+
+			</div>
+		</div>
+
 		<div id="info"><a href="http://threejs.org" target="_blank">three.js</a> - dashed lines example</div>
 		<div id="container" ></div>
+
+
+
+		<script src=http://code.jquery.com/jquery-2.0.1.js ></script>
+		<script src=http://code.jquery.com/ui/1.10.3/jquery-ui.js ></script>
 
 		<script src="../examples/js/Detector.js"></script>
 		<script src="../examples/js/libs/stats.min.js"></script>
@@ -45,13 +66,7 @@
 
 		<script type='text/javascript' src='../examples/js/libs/dat.gui.min.js'></script>
 		<script>
-//			$(function() {
-//				$( "input[type=submit], a, button" )
-//						.button()
-//						.click(function( event ) {
-//							event.preventDefault();
-//						});
-//			});
+			$( "#dialog" ).dialog();
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
