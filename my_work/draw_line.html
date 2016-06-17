@@ -282,41 +282,53 @@
 //			}
 
 			function drawLine() {
-				var material = new THREE.LineBasicMaterial({
-					color: 0x0000ff
-				});
-				var geometry = new THREE.BufferGeometry();
-				// attributes
-				positions = new Float32Array( 103 * 3 ); // 3 vertices per point
-				geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+				var loader = new THREE.TextureLoader();
 
-				line = new THREE.Line(geometry, material);
-				line.geometry.dynamic = true;
+				loader.load('images/direction.png', function ( texture ) {
+					texture.wrapS = THREE.RepeatWrapping;
+					texture.wrapT = THREE.RepeatWrapping;
+					texture.repeat.set( 40, 40 );
+//					var geometry = new THREE.SphereGeometry(1000, 20, 20);
+					var material = new THREE.MeshBasicMaterial({map: texture, overdraw: 0.5});
+
+					var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+					var floor = new THREE.Mesh(floorGeometry, material);
+					floor.position.y = -0.5;
+//					floor.rotation.x = Math.PI / 2;
+					scene.add(floor);
+
+					var geometry = new THREE.BufferGeometry();
+					// attributes
+					positions = new Float32Array( 103 * 3 ); // 3 vertices per point
+					geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+
+					line = new THREE.Line(geometry, material);
+					line.geometry.dynamic = true;
 
 
 //				var positions = line.geometry.attributes.position.array;
 
-				var x = y = z = index = 0;
+					var x = y = z = index = 0;
 
-				for ( var i = 0, l = MAX_POINTS; i < l; i ++ ) {
+					for ( var i = 0, l = MAX_POINTS; i < l; i ++ ) {
 
-					positions[ index ++ ] = x;
-					positions[ index ++ ] = y;
-					positions[ index ++ ] = z;
+						positions[ index ++ ] = x;
+						positions[ index ++ ] = y;
+						positions[ index ++ ] = z;
 
-/*
-					x += ( Math.random() - 0.5 ) * 30;
-					y += ( Math.random() - 0.5 ) * 30;
-					z += ( Math.random() - 0.5 ) * 30;
-*/
+						/*
+						 x += ( Math.random() - 0.5 ) * 30;
+						 y += ( Math.random() - 0.5 ) * 30;
+						 z += ( Math.random() - 0.5 ) * 30;
+						 */
 
-				}
-				positions[0] = 10; positions[1]=20;
-				positions[3] = -20; positions[4]=30;
-				positions[6] = -30; positions[7]=50;
-				vertex_number = 3;
+					}
+					positions[0] = 10; positions[1]=20;
+					positions[3] = -20; positions[4]=30;
+					positions[6] = -30; positions[7]=50;
+					vertex_number = 3;
 
-				line.geometry.setDrawRange( 0, vertex_number );
+					line.geometry.setDrawRange( 0, vertex_number );
 
 
 //				// fake points to take position
@@ -330,9 +342,64 @@
 
 
 
-				scene.add(line);
+					scene.add(line);
 
-				line.material.linewidth = 15;
+					line.material.linewidth = 15;
+
+					render();
+				});
+
+//				var material = new THREE.LineBasicMaterial({
+//					map: THREE.ImageUtils.loadTexture('images/direction.png')
+//				});
+//				var geometry = new THREE.BufferGeometry();
+//				// attributes
+//				positions = new Float32Array( 103 * 3 ); // 3 vertices per point
+//				geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+//
+//				line = new THREE.Line(geometry, material);
+//				line.geometry.dynamic = true;
+//
+//
+////				var positions = line.geometry.attributes.position.array;
+//
+//				var x = y = z = index = 0;
+//
+//				for ( var i = 0, l = MAX_POINTS; i < l; i ++ ) {
+//
+//					positions[ index ++ ] = x;
+//					positions[ index ++ ] = y;
+//					positions[ index ++ ] = z;
+//
+///*
+//					x += ( Math.random() - 0.5 ) * 30;
+//					y += ( Math.random() - 0.5 ) * 30;
+//					z += ( Math.random() - 0.5 ) * 30;
+//*/
+//
+//				}
+//				positions[0] = 10; positions[1]=20;
+//				positions[3] = -20; positions[4]=30;
+//				positions[6] = -30; positions[7]=50;
+//				vertex_number = 3;
+//
+//				line.geometry.setDrawRange( 0, vertex_number );
+//
+//
+////				// fake points to take position
+////				for(var i=0;i<100;i++)
+////				{
+////					geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+////				}
+//
+//
+//
+//
+//
+//
+//				scene.add(line);
+//
+//				line.material.linewidth = 15;
 
 			}
 

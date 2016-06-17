@@ -85,12 +85,12 @@
 				geometryCube.computeLineDistances();
 				geometrySpline.computeLineDistances();
 
-				var object = new THREE.Line( geometrySpline, new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1, gapSize: 0.5 } ) );
+				var object = new THREE.Line( geometrySpline, new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1, gapSize: 0.5, linewidth: 50 } ) );
 
 				objects.push( object );
 				scene.add( object );
 
-				var object = new THREE.LineSegments( geometryCube, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 3, gapSize: 1, linewidth: 2 } ) );
+				var object = new THREE.LineSegments( geometryCube, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 5, gapSize: 5, linewidth: 50 } ) );
 
 				objects.push( object );
 				scene.add( object );

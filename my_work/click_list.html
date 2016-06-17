@@ -157,7 +157,7 @@ var my_intersection;
 				// create two polygon and one line first
 				// line
 				var line_material = new THREE.LineBasicMaterial({
-					color: 0x0000ff
+					map: THREE.ImageUtils.loadTexture('images/direction.png')
 				});
 				var line_geometry = new THREE.Geometry();
 				line_geometry.vertices.push(new THREE.Vector3(60, 30, 0));
