@@ -156,7 +156,16 @@
 
 				loader.load('images/direction.png', function ( texture ) {
 
+					texture.wrapS = THREE.RepeatWrapping;
+					texture.repeat.set( 1, 1);
+
+
+
 					var material = new THREE.MeshBasicMaterial({map: texture});
+					material.transparent = true;
+					material.opacity = 0.5;
+					material.side = THREE.DoubleSide;
+					material.depthWrite = false;
 
 
 					var fishShape = new THREE.Shape();
