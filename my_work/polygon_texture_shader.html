@@ -38,12 +38,17 @@
 		<script src="../examples/js/controls/OrbitControls.js"></script>
 
 		<script id="vertexShader" type="x-shader/x-vertex">
+			uniform float rotation;
 			varying vec2 vUv;
 			varying vec3 pos;
+			varying float vRotation;
+
+
 
 			void main() {
 				vUv = uv;
 				pos = position;
+				vRotation = rotation;
 
 				gl_Position =   projectionMatrix *
 								modelViewMatrix *
@@ -56,6 +61,9 @@
 
 			varying vec2 vUv;
 			varying vec3 pos;
+			varying float vRotation;
+uniform vec3 color;
+
 
 			void main() {
 
@@ -64,7 +72,15 @@
 				//float ty = mod(pos.y,5.0);
 				//gl_FragColor = texture2D(texture1, vec2(tx,ty*0.2) );
 
-				gl_FragColor = texture2D(texture1, vec2(vUv.x,vUv.y*0.2) );
+				//gl_FragColor = texture2D(texture1, vec2(vUv.x,vUv.y*0.2) );
+
+				//https://github.com/mrdoob/three.js/issues/1891#issuecomment-5923058
+				float mid = 0.5;
+      			vec2 rotated = vec2(cos(vRotation) * (vUv.x - mid) + sin(vRotation) * (vUv.y - mid) + mid,
+                          cos(vRotation) * (vUv.y - mid) - sin(vRotation) * (vUv.x - mid) + mid);
+				vec4 rotatedTexture = texture2D( texture1,  rotated);
+				gl_FragColor = rotatedTexture;
+
 				//gl_FragColor = vec4(0.5, 0.2, 1.0, 1.0); // Works; Displays Flat Color
 			}
 		</script>
@@ -191,8 +207,10 @@
 					var vertShader = document.getElementById('vertexShader').innerHTML;
 					var fragShader = document.getElementById('fragmentShader').innerHTML;
 
+					var rotation_angle = 60.0/57.3;
 					var uniforms = {
-						texture1: { type: 't', value: texture }
+						texture1: { type: 't', value: texture },
+						rotation: { type: 'f', value: rotation_angle }
 					};
 
 					var material = new THREE.ShaderMaterial({
