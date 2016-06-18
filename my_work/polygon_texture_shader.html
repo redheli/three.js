@@ -75,9 +75,11 @@ uniform vec3 color;
 				//gl_FragColor = texture2D(texture1, vec2(vUv.x,vUv.y*0.2) );
 
 				//https://github.com/mrdoob/three.js/issues/1891#issuecomment-5923058
+				float tx = mod(pos.x,1.0);
+				float ty = mod(pos.y,5.0) * 0.2;
 				float mid = 0.5;
-      			vec2 rotated = vec2(cos(vRotation) * (vUv.x - mid) + sin(vRotation) * (vUv.y - mid) + mid,
-                          cos(vRotation) * (vUv.y - mid) - sin(vRotation) * (vUv.x - mid) + mid);
+      			vec2 rotated = vec2(cos(vRotation) * (tx - mid) + sin(vRotation) * (ty - mid) + mid,
+                          cos(vRotation) * (ty - mid) - sin(vRotation) * (tx - mid) + mid);
 				vec4 rotatedTexture = texture2D( texture1,  rotated);
 				gl_FragColor = rotatedTexture;
 
