@@ -55,7 +55,7 @@
 			varying vec2 vUv;
 
 			void main() {
-				gl_FragColor = texture2D(texture1, vUv); // Displays Nothing
+				gl_FragColor = texture2D(texture1, vec2(vUv.x,vUv.y) );
 				//gl_FragColor = vec4(0.5, 0.2, 1.0, 1.0); // Works; Displays Flat Color
 			}
 		</script>
@@ -83,10 +83,10 @@
 
 				camera = new THREE.PerspectiveCamera( 60, WIDTH / HEIGHT, 1, 2000 );
 				camera.up.set( 0, 0, 1 );
-				camera.position.z = 50;
-				camera.position.x = 5;
-				camera.position.y = -10;
-				camera.lookAt(new THREE.Vector3(5, 5, 0));
+				camera.position.z = 10;
+				camera.position.x = 0;
+				camera.position.y = 0;
+				camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 
 
@@ -164,13 +164,6 @@
 				var axisHelper = new THREE.AxisHelper( 10 );
 				scene.add( axisHelper );
 			}
-
-//			function myRender() {
-//
-//				renderer.render( scene, camera );
-//				stats.update();
-//
-//			}
 
 			function drawPolygon() {
 
