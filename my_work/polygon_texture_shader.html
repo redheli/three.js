@@ -59,10 +59,11 @@
 
 			void main() {
 
-				float tx = mod(pos.x,1.0);
-				float ty = mod(pos.y,1.0);
-				gl_FragColor = texture2D(texture1, vec2(tx,ty) );
-				//gl_FragColor = texture2D(texture1, vec2(vUv.x,vUv.y) );
+				//float tx = mod(pos.x,1.0);
+				//float ty = mod(pos.y,1.0);
+				//gl_FragColor = texture2D(texture1, vec2(tx,ty) );
+
+				gl_FragColor = texture2D(texture1, vec2(vUv.x,vUv.y*0.2) );
 				//gl_FragColor = vec4(0.5, 0.2, 1.0, 1.0); // Works; Displays Flat Color
 			}
 		</script>
@@ -181,8 +182,8 @@
 				loader.load('images/direction.png', function ( texture ) {
 
 //					texture.wrapS = THREE.RepeatWrapping;
-//					texture.wrapT = THREE.ClampToEdgeWrapping;
-//					texture.repeat.set( 0.1, 1/lane_width);
+					texture.wrapT = THREE.RepeatWrapping;
+					texture.repeat.set.y = 1/lane_width;
 
 
 					// Create ShaderMaterial
