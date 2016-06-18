@@ -61,10 +61,10 @@
 
 				camera = new THREE.PerspectiveCamera( 60, WIDTH / HEIGHT, 1, 2000 );
 				camera.up.set( 0, 0, 1 );
-				camera.position.z = 150;
-				camera.position.x = 20;
-				camera.position.y = -50;
-				camera.lookAt(new THREE.Vector3(0, 0, 0));
+				camera.position.z = 50;
+				camera.position.x = 5;
+				camera.position.y = -10;
+				camera.lookAt(new THREE.Vector3(5, 5, 0));
 
 
 
@@ -154,10 +154,13 @@
 
 				var loader = new THREE.TextureLoader();
 
+				var lane_width = 5.0;
+
 				loader.load('images/direction.png', function ( texture ) {
 
 					texture.wrapS = THREE.RepeatWrapping;
-					texture.repeat.set( 1, 1);
+					texture.wrapT = THREE.ClampToEdgeWrapping;
+					texture.repeat.set( 0.1, 1/lane_width);
 
 
 
@@ -167,23 +170,42 @@
 					material.side = THREE.DoubleSide;
 					material.depthWrite = false;
 
+					var material2 = new THREE.MeshBasicMaterial({color:0x00ff00});
+					material2.transparent = true;
+					material2.opacity = 0.5;
+					material2.side = THREE.DoubleSide;
+					material2.depthWrite = false;
+
 
 					var fishShape = new THREE.Shape();
 
+
+
 					fishShape.moveTo(0, 0);
-					fishShape.moveTo(20, 0);
-					fishShape.moveTo(20, 10);
-					fishShape.moveTo(0, 10);
+					fishShape.moveTo(10, 0);
+					fishShape.moveTo(10, 20);
+					fishShape.moveTo(5, 20);
+					fishShape.moveTo(5, 5);
+//					fishShape.moveTo(20, lane_width);
+					fishShape.moveTo(0, lane_width);
 
 					var geometry = new THREE.ShapeGeometry(fishShape);
+
+					var geometry2 = new THREE.ShapeGeometry(fishShape);
 
 
 					var mesh = new THREE.Mesh(geometry, material);
 					mesh.name = "my_mesh";
 					mesh.position = new THREE.Vector3(0, 0, 0.1);
-					mesh.position.setZ(0.1);
+					mesh.position.setZ(0.2);
+
+					var mesh2 = new THREE.Mesh(geometry2, material2);
+					mesh2.name = "my_mesh";
+					mesh2.position = new THREE.Vector3(0, 0, 0.1);
+					mesh2.position.setZ(0.1);
 
 					scene.add(mesh);
+					scene.add(mesh2);
 				});// end loader
 
 			}
